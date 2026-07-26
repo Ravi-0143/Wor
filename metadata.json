@@ -1,0 +1,6 @@
+{
+  "name": "Antigravity English Lexicon",
+  "description": "Ultra-fast, clutter-free English synonyms and vocabulary revision engine inspired by Google Antigravity. Features instant search, PYQ traps, interactive flashcards, and exam challenge quiz.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
