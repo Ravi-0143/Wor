@@ -4,8 +4,10 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import fs from 'fs';
 
+const isVercel = !!process.env.VERCEL || !!process.env.VERCEL_ENV;
+
 export default defineConfig({
-  base: '/Wor/',
+  base: isVercel ? '/' : '/Wor/',
   plugins: [
     react(),
     tailwindcss(),

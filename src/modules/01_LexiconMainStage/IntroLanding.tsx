@@ -44,15 +44,20 @@ const DEMO_WORDS = [
 function useReducedMotion() {
   const [reduced, setReduced] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduced(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
-    if (mq.addEventListener) mq.addEventListener('change', handler);
-    else mq.addListener(handler);
-    return () => {
-      if (mq.removeEventListener) mq.removeEventListener('change', handler);
-      else mq.removeListener(handler);
-    };
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    try {
+      const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+      setReduced(mq?.matches || false);
+      const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+      if (mq.addEventListener) mq.addEventListener('change', handler);
+      else if ('addListener' in mq) (mq as any).addListener(handler);
+      return () => {
+        if (mq.removeEventListener) mq.removeEventListener('change', handler);
+        else if ('removeListener' in mq) (mq as any).removeListener(handler);
+      };
+    } catch {
+      // Fallback if matchMedia throws
+    }
   }, []);
   return reduced;
 }
