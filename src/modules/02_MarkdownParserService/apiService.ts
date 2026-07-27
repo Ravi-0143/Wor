@@ -10,13 +10,15 @@ export async function fetchDefaultRevisionGuide(): Promise<RevisionGuideData> {
     const text = await response.text();
     return parseRevisionGuideMarkdown(text, 'Local /public/revision_guide.md');
   } catch (err: any) {
-    console.warn('Fallback fetching directly from /revision_guide.md:', err);
-    const directRes = await fetch('/revision_guide.md');
+    console.warn('Fallback fetching directly from revision_guide.md:', err);
+    const basePath = (import.meta as any).env?.BASE_URL || '/';
+    const cleanBasePath = basePath.endsWith('/') ? basePath : `${basePath}/`;
+    const directRes = await fetch(`${cleanBasePath}revision_guide.md`);
     if (!directRes.ok) {
       throw new Error('Failed to load default revision guide');
     }
     const text = await directRes.text();
-    return parseRevisionGuideMarkdown(text, '/revision_guide.md');
+    return parseRevisionGuideMarkdown(text, `${cleanBasePath}revision_guide.md`);
   }
 }
 
