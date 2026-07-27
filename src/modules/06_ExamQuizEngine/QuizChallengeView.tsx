@@ -29,6 +29,9 @@ export const QuizChallengeView: React.FC<QuizChallengeViewProps> = ({ words }) =
   const [aiError, setAiError] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
 
+  // Check if Gemini API key is available (baked in at build time via VITE_GEMINI_API_KEY)
+  const hasApiKey = !!((import.meta as any).env?.VITE_GEMINI_API_KEY);
+
   useEffect(() => {
     if (!words || words.length < 4) return;
 
@@ -58,11 +61,17 @@ export const QuizChallengeView: React.FC<QuizChallengeViewProps> = ({ words }) =
 
   const handleSelectOption = (opt: string) => {
     if (selectedOption !== null) return;
+    // Guard: currentQuestion may be undefined if questions array is empty
+    if (!currentQuestion) return;
     setSelectedOption(opt);
 
     if (opt === currentQuestion.correctAnswer) {
       setScore(s => s + 1);
-      confetti({ particleCount: 25, spread: 60, origin: { y: 0.6 } });
+      try {
+        confetti({ particleCount: 25, spread: 60, origin: { y: 0.6 } });
+      } catch {
+        // confetti may fail in canvas-blocked or non-secure contexts — not critical
+      }
     }
   };
 
@@ -111,10 +120,18 @@ export const QuizChallengeView: React.FC<QuizChallengeViewProps> = ({ words }) =
     }
   };
 
-  if (questions.length === 0) {
+  if (!words || words.length < 4) {
     return (
       <div className="py-20 text-center text-slate-400 font-mono">
-        Need at least 4 words in dataset to build quiz challenge...
+        Need at least 4 words in your dataset to build a quiz challenge.
+      </div>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <div className="py-20 text-center text-slate-400 font-mono animate-pulse">
+        Building quiz questions…
       </div>
     );
   }
@@ -141,6 +158,30 @@ export const QuizChallengeView: React.FC<QuizChallengeViewProps> = ({ words }) =
         </div>
       </div>
 
+      {/* API Key Notice — only shown if key is missing */}
+      {!hasApiKey && (
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/5 px-5 py-4">
+          <Sparkles className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+          <div className="text-xs text-amber-300/90 leading-relaxed">
+            <span className="font-bold text-amber-300">AI Quiz Generation is disabled.</span>{' '}
+            The "Generate Gemini AI Question" button requires a{' '}
+            <code className="bg-amber-500/10 px-1.5 py-0.5 rounded text-amber-200 font-mono">VITE_GEMINI_API_KEY</code> environment variable.{' '}
+            To enable it: go to your{' '}
+            <a
+              href="https://github.com/Ravi-0143/Wor/settings/secrets/actions"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline text-amber-200 hover:text-white"
+            >
+              GitHub repo → Settings → Secrets
+            </a>{' '}
+            and add <code className="bg-amber-500/10 px-1.5 py-0.5 rounded text-amber-200 font-mono">VITE_GEMINI_API_KEY</code> with your key from{' '}
+            <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer" className="underline text-amber-200 hover:text-white">aistudio.google.com</a>.
+            The static quiz below works fully without it.
+          </div>
+        </div>
+      )}
+
       {!isFinished && currentQuestion ? (
         <div className="rounded-3xl border border-white/10 bg-[#161922] p-6 sm:p-8 shadow-2xl space-y-6">
           
@@ -157,12 +198,12 @@ export const QuizChallengeView: React.FC<QuizChallengeViewProps> = ({ words }) =
 
             <button
               onClick={handleGenerateAIQuestion}
-              disabled={aiLoading}
-              className="flex items-center gap-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 px-3.5 py-1.5 text-xs font-medium text-amber-300 border border-amber-500/30 transition-all disabled:opacity-50"
-              title="Generate a dynamic exam question powered by Gemini API"
+              disabled={aiLoading || !hasApiKey}
+              className="flex items-center gap-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 px-3.5 py-1.5 text-xs font-medium text-amber-300 border border-amber-500/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              title={!hasApiKey ? 'API key not configured — see the notice above' : 'Generate a dynamic exam question powered by Gemini API'}
             >
               <Sparkles className={`h-3.5 w-3.5 ${aiLoading ? 'animate-spin' : ''}`} />
-              <span>{aiLoading ? 'Generating AI Quiz...' : 'Generate Gemini AI Question'}</span>
+              <span>{aiLoading ? 'Generating AI Quiz...' : !hasApiKey ? 'AI Unavailable (no API key)' : 'Generate Gemini AI Question'}</span>
             </button>
           </div>
 
@@ -203,7 +244,7 @@ export const QuizChallengeView: React.FC<QuizChallengeViewProps> = ({ words }) =
 
           {/* Options */}
           <div className="grid grid-cols-1 gap-3 pt-2">
-            {currentQuestion.options.map((opt, idx) => {
+            {(currentQuestion.options || []).filter(Boolean).map((opt, idx) => {
               const isSelected = selectedOption === opt;
               const isCorrect = opt === currentQuestion.correctAnswer;
               let btnStyle = 'border-white/10 bg-[#1C202C] hover:bg-[#232838] text-[#E2E8F0]';

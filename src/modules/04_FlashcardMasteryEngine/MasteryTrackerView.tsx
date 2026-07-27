@@ -37,7 +37,11 @@ export const MasteryTrackerView: React.FC<MasteryTrackerViewProps> = ({
   const handleNextCard = (markMastered: boolean) => {
     if (currentWord && markMastered) {
       onToggleMastery(currentWord.id);
-      confetti({ particleCount: 30, spread: 60, origin: { y: 0.7 } });
+      try {
+        confetti({ particleCount: 30, spread: 60, origin: { y: 0.7 } });
+      } catch {
+        // confetti may fail in canvas-blocked or non-secure contexts — not critical
+      }
     }
     setIsFlipped(false);
     if (currentIndex < unmasteredWords.length - 1) {
@@ -180,7 +184,7 @@ export const MasteryTrackerView: React.FC<MasteryTrackerViewProps> = ({
                     <div className="space-y-2 pt-3 border-t border-slate-100">
                       <span className="text-xs font-bold text-indigo-800 font-mono uppercase">Core Synonyms</span>
                       <div className="flex flex-wrap gap-1.5">
-                        {currentWord.coreSynonyms.map((s, idx) => (
+                        {(currentWord.coreSynonyms || []).map((s, idx) => (
                           <span key={idx} className="rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-900 border border-indigo-200">
                             {s}
                           </span>

@@ -88,5 +88,27 @@ Make sure 1 option is clearly correct and 3 are plausible distractors. Respond O
 
   const text = response.text || '';
   const cleanJson = text.replace(/```json|```/g, '').trim();
-  return JSON.parse(cleanJson);
+
+  let parsed: AIQuizQuestionResponse;
+  try {
+    parsed = JSON.parse(cleanJson);
+  } catch {
+    throw new Error(
+      'Gemini returned an unexpected response format. The AI model may be temporarily unavailable — please try again in a moment.'
+    );
+  }
+
+  // Validate that the required fields are present to avoid downstream crashes
+  if (
+    typeof parsed.question !== 'string' ||
+    !Array.isArray(parsed.options) ||
+    parsed.options.length < 2 ||
+    typeof parsed.correctAnswer !== 'string'
+  ) {
+    throw new Error(
+      'Gemini response was missing required fields (question, options, correctAnswer). Please try again.'
+    );
+  }
+
+  return parsed;
 }

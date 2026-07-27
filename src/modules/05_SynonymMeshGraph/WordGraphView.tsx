@@ -272,7 +272,8 @@ export const WordGraphView: React.FC<WordGraphViewProps> = ({ words, onSelectWor
 
   // 4. Advanced Interaction Handlers (Pan, Zoom, Drag)
   const getPointerWorldCoord = (e: React.PointerEvent) => {
-    const rect = canvasRef.current!.getBoundingClientRect();
+    if (!canvasRef.current) return { worldX: 0, worldY: 0, screenX: 0, screenY: 0 };
+    const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const { transform } = engine.current;
@@ -347,11 +348,12 @@ export const WordGraphView: React.FC<WordGraphViewProps> = ({ words, onSelectWor
   };
 
   const handleWheel = (e: React.WheelEvent) => {
+    if (!canvasRef.current) return;
     const zoomSensitivity = 0.001;
     const delta = e.deltaY * -zoomSensitivity;
     const newScale = Math.min(Math.max(0.2, engine.current.transform.scale * (1 + delta)), 4);
     
-    const rect = canvasRef.current!.getBoundingClientRect();
+    const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
@@ -368,6 +370,18 @@ export const WordGraphView: React.FC<WordGraphViewProps> = ({ words, onSelectWor
     engine.current.transform = { x: 0, y: 0, scale: 1 };
     engine.current.energy = 1.0;
   };
+
+  if (!words || words.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-20 text-center">
+        <div className="rounded-2xl border border-white/10 bg-[#161922] p-10 max-w-sm mx-auto">
+          <Network className="h-10 w-10 text-slate-600 mx-auto mb-3" />
+          <p className="text-slate-400 text-sm font-sans">No word data available to build the graph.</p>
+          <p className="text-slate-500 text-xs mt-1">Load a revision guide first, then return here.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 max-w-5xl mx-auto px-4 h-full flex flex-col min-h-[700px]">

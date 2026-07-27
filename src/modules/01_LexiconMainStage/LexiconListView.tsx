@@ -17,6 +17,9 @@ export const LexiconListView: React.FC<LexiconListViewProps> = ({
   masteredIds,
   onToggleMastery,
 }) => {
+  // Guard: ensure words is always an array even if parent passes undefined
+  const safeWords = Array.isArray(words) ? words : [];
+
   return (
     <div className="space-y-4">
       
@@ -27,7 +30,7 @@ export const LexiconListView: React.FC<LexiconListViewProps> = ({
           <span className="uppercase tracking-wider font-semibold text-[#F1F5F9]">
             Exam-Ready Quick Revision Lexicon
           </span>
-          <span className="text-slate-500">({words.length} terms)</span>
+          <span className="text-slate-500">({safeWords.length} terms)</span>
         </div>
         <span className="text-[11px] text-amber-400/80 hidden sm:inline">
           Instant Frequent Synonyms At a Glance • Click term to Delve Deeper (Module 08)
@@ -50,9 +53,10 @@ export const LexiconListView: React.FC<LexiconListViewProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-xs text-[#E2E8F0] font-sans">
-              {words.map((word) => {
+              {safeWords.map((word) => {
                 const isMastered = masteredIds.includes(word.id);
-                const allFrequentSynonyms = [...word.coreSynonyms, ...word.advancedSynonyms];
+                const allFrequentSynonyms = [...(word.coreSynonyms || []), ...(word.advancedSynonyms || [])];
+                void allFrequentSynonyms;
 
                 return (
                   <tr 
@@ -111,7 +115,7 @@ export const LexiconListView: React.FC<LexiconListViewProps> = ({
                     {/* Instant Frequent Synonyms at a Glance */}
                     <td className="py-3.5 px-4">
                       <div className="flex flex-wrap gap-1.5">
-                        {word.coreSynonyms.map((syn, idx) => (
+                        {(word.coreSynonyms || []).map((syn, idx) => (
                           <span
                             key={`core-${idx}`}
                             className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-300 border border-amber-500/20"
@@ -119,7 +123,7 @@ export const LexiconListView: React.FC<LexiconListViewProps> = ({
                             {syn}
                           </span>
                         ))}
-                        {word.advancedSynonyms.map((syn, idx) => (
+                        {(word.advancedSynonyms || []).map((syn, idx) => (
                           <span
                             key={`adv-${idx}`}
                             className="rounded-md bg-[#232838] px-2 py-0.5 text-[11px] font-medium text-slate-300 border border-white/5"
@@ -133,8 +137,8 @@ export const LexiconListView: React.FC<LexiconListViewProps> = ({
                     {/* Antonyms */}
                     <td className="py-3.5 px-4 hidden lg:table-cell">
                       <div className="flex flex-wrap gap-1">
-                        {word.antonyms.length > 0 ? (
-                          word.antonyms.map((ant, idx) => (
+                        {(word.antonyms || []).length > 0 ? (
+                          (word.antonyms || []).map((ant, idx) => (
                             <span
                               key={idx}
                               className="rounded-md bg-rose-500/10 px-2 py-0.5 text-[10px] font-medium text-rose-300 border border-rose-500/20 line-through"
