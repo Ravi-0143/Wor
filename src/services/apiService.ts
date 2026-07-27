@@ -6,29 +6,29 @@ export async function fetchDefaultRevisionGuide(): Promise<RevisionGuideData> {
   const basePath = (import.meta as any).env?.BASE_URL || '/';
   const cleanBasePath = basePath.endsWith('/') ? basePath : `${basePath}/`;
   
-  if ((import.meta as any).env?.PROD) {
-    const directRes = await fetch(`${cleanBasePath}revision_guide.md`);
-    if (!directRes.ok) throw new Error('Failed to load default revision guide');
-    const text = await directRes.text();
-    return parseRevisionGuideMarkdown(text, `${cleanBasePath}revision_guide.md`);
+  const candidateUrls = [
+    `${cleanBasePath}revision_guide.md`,
+    `${cleanBasePath}public/revision_guide.md`,
+    '/revision_guide.md',
+    '/public/revision_guide.md',
+    'https://raw.githubusercontent.com/Ravi-0143/Wor/main/public/revision_guide.md'
+  ];
+
+  for (const url of candidateUrls) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        const text = await res.text();
+        if (text && text.trim().length > 0) {
+          return parseRevisionGuideMarkdown(text, url);
+        }
+      }
+    } catch {
+      // Continue trying next candidate URL
+    }
   }
 
-  try {
-    const response = await fetch('/api/revision-guide');
-    if (!response.ok) {
-      throw new Error(`Failed to load revision guide: ${response.statusText}`);
-    }
-    const text = await response.text();
-    return parseRevisionGuideMarkdown(text, 'Local /public/revision_guide.md');
-  } catch (err: any) {
-    console.warn('Fallback fetching directly from revision_guide.md:', err);
-    const directRes = await fetch(`${cleanBasePath}revision_guide.md`);
-    if (!directRes.ok) {
-      throw new Error('Failed to load default revision guide');
-    }
-    const text = await directRes.text();
-    return parseRevisionGuideMarkdown(text, `${cleanBasePath}revision_guide.md`);
-  }
+  throw new Error('Failed to load default revision guide from all fallback locations.');
 }
 
 export async function fetchGitHubRevisionGuide(githubUrl: string): Promise<RevisionGuideData> {

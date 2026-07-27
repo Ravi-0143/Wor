@@ -14,9 +14,16 @@ export default defineConfig({
       apply: 'build',
       writeBundle() {
         const source = path.resolve(__dirname, 'public', 'revision_guide.md');
-        const dest = path.resolve(__dirname, 'dist', 'revision_guide.md');
+        const destRoot = path.resolve(__dirname, 'dist', 'revision_guide.md');
+        const publicDir = path.resolve(__dirname, 'dist', 'public');
+        const destPublic = path.resolve(publicDir, 'revision_guide.md');
+
         if (fs.existsSync(source)) {
-          fs.copyFileSync(source, dest);
+          fs.copyFileSync(source, destRoot);
+          if (!fs.existsSync(publicDir)) {
+            fs.mkdirSync(publicDir, { recursive: true });
+          }
+          fs.copyFileSync(source, destPublic);
         }
       },
     },
