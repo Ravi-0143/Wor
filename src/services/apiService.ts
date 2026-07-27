@@ -121,11 +121,32 @@ Return ONLY valid JSON — no markdown, no backticks:
   const { GoogleGenAI } = await import('@google/genai');
   const ai = new GoogleGenAI({ apiKey });
 
+  const candidateModels = ['gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-2.0-flash-lite'];
+  let response: any = null;
+  let lastError: any = null;
+
+  for (const modelName of candidateModels) {
+    try {
+      response = await ai.models.generateContent({
+        model: modelName,
+        contents: prompt,
+      });
+      if (response && response.text) break;
+    } catch (err: any) {
+      lastError = err;
+      const isNotFound = err?.status === 404 || err?.message?.includes('404') || err?.message?.includes('NOT_FOUND');
+      if (isNotFound) {
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  if (!response || !response.text) {
+    throw lastError || new Error('All Gemini candidate models returned empty response.');
+  }
+
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: prompt,
-    });
 
     const raw = response.text || '';
     const cleanJson = raw.replace(/```json|```/g, '').trim();
