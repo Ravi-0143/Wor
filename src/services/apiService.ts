@@ -64,13 +64,22 @@ export interface AIQuizQuestionResponse {
   hint?: string;
 }
 
+// Quiz Question Session Cache
+const quizQuestionCache = new Map<string, AIQuizQuestionResponse>();
+
 export async function fetchAIQuizQuestion(
   word: string,
   meaning: string,
   category: string | undefined,
   correctAnswer: string,
-  distractorPool: string[]
+  distractorPool: string[],
+  retries = 3
 ): Promise<AIQuizQuestionResponse> {
+  const cacheKey = `${word.toLowerCase()}-${correctAnswer.toLowerCase()}`;
+  if (quizQuestionCache.has(cacheKey)) {
+    return quizQuestionCache.get(cacheKey)!;
+  }
+
   const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY as string | undefined;
   if (!apiKey) {
     throw new Error('VITE_GEMINI_API_KEY is not set. Add it to your .env file locally or as a GitHub Secret in your repository.');
@@ -112,32 +121,43 @@ Return ONLY valid JSON — no markdown, no backticks:
 
   const ai = new GoogleGenAI({ apiKey });
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash',
-    contents: prompt,
-  });
-
-  const raw = response.text || '';
-  const cleanJson = raw.replace(/```json|```/g, '').trim();
-
-  let parsed: AIQuizQuestionResponse;
   try {
-    parsed = JSON.parse(cleanJson);
-  } catch {
-    throw new Error('Gemini returned an unexpected format. Please try again in a moment.');
+    const response = await ai.models.generateContent({
+      model: 'gemini-1.5-flash',
+      contents: prompt,
+    });
+
+    const raw = response.text || '';
+    const cleanJson = raw.replace(/```json|```/g, '').trim();
+
+    let parsed: AIQuizQuestionResponse;
+    try {
+      parsed = JSON.parse(cleanJson);
+    } catch {
+      throw new Error('Gemini returned an unexpected format. Please try again in a moment.');
+    }
+
+    if (
+      typeof parsed.question !== 'string' ||
+      !Array.isArray(parsed.options) ||
+      typeof parsed.correctAnswer !== 'string'
+    ) {
+      throw new Error('Gemini response was missing required fields. Please try again.');
+    }
+
+    // Hard-enforce lexicon options regardless of what Gemini returned
+    parsed.options = allOptions;
+    parsed.correctAnswer = correctAnswer;
+
+    // Save in session cache
+    quizQuestionCache.set(cacheKey, parsed);
+    return parsed;
+  } catch (err: any) {
+    const isRateLimit = err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('RESOURCE_EXHAUSTED');
+    if (isRateLimit && retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return fetchAIQuizQuestion(word, meaning, category, correctAnswer, distractorPool, retries - 1);
+    }
+    throw err;
   }
-
-  if (
-    typeof parsed.question !== 'string' ||
-    !Array.isArray(parsed.options) ||
-    typeof parsed.correctAnswer !== 'string'
-  ) {
-    throw new Error('Gemini response was missing required fields. Please try again.');
-  }
-
-  // Hard-enforce lexicon options regardless of what Gemini returned
-  parsed.options = allOptions;
-  parsed.correctAnswer = correctAnswer;
-
-  return parsed;
 }
