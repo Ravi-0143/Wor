@@ -81,7 +81,7 @@ Return ONLY valid JSON matching this exact structure:
 Make sure 1 option is clearly correct and 3 are plausible distractors. Respond ONLY with raw JSON, no markdown formatting or backticks.`;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-1.5-flash',
         contents: prompt,
       });
 
