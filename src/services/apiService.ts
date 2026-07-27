@@ -1,6 +1,5 @@
 import { RevisionGuideData } from '../types';
 import { parseRevisionGuideMarkdown } from './revisionGuideParser';
-import { GoogleGenAI } from '@google/genai';
 
 export async function fetchDefaultRevisionGuide(): Promise<RevisionGuideData> {
   const basePath = (import.meta as any).env?.BASE_URL || '/';
@@ -119,6 +118,7 @@ Return ONLY valid JSON — no markdown, no backticks:
   "hint": "..."
 }`;
 
+  const { GoogleGenAI } = await import('@google/genai');
   const ai = new GoogleGenAI({ apiKey });
 
   try {
