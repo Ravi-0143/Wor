@@ -59,56 +59,87 @@ export interface AIQuizQuestionResponse {
   hint?: string;
 }
 
-export async function fetchAIQuizQuestion(word: string, meaning: string, category?: string): Promise<AIQuizQuestionResponse> {
+/**
+ * Calls Gemini directly from the browser.
+ * All 4 answer options are pinned to real lexicon words:
+ *   - correctAnswer  : the word's own synonym/meaning passed in
+ *   - distractorPool : 3 words picked from other entries in the lexicon
+ * Gemini only writes the question text, explanation, and hint.
+ */
+export async function fetchAIQuizQuestion(
+  word: string,
+  meaning: string,
+  category: string | undefined,
+  correctAnswer: string,
+  distractorPool: string[]
+): Promise<AIQuizQuestionResponse> {
   const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY as string | undefined;
   if (!apiKey) {
-    throw new Error('VITE_GEMINI_API_KEY is not set. Add it to your .env file locally or as a GitHub Secret.');
+    throw new Error('VITE_GEMINI_API_KEY is not set. Add it to your .env file locally or as a GitHub Secret in your repository.');
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  // Ensure we always have exactly 3 distractors
+  const distractors = distractorPool.slice(0, 3);
+  while (distractors.length < 3) distractors.push(`Option ${distractors.length + 1}`);
+
+  // Shuffle all 4 options so the correct answer isn't always first
+  const allOptions = [correctAnswer, ...distractors].sort(() => Math.random() - 0.5);
 
   const prompt = `You are an SSC CGL / Competitive Exam Vocabulary Quiz Master.
-Generate a high-yield multiple-choice quiz question for the vocabulary word "${word}" (Meaning: "${meaning || ''}", Category: "${category || 'General'}").
 
-Return ONLY valid JSON matching this exact structure:
+Write an exam-quality multiple-choice question for the word "${word}".
+  Word meaning: "${meaning || ''}"
+  Category: "${category || 'General'}"
+
+STRICT RULES — you MUST follow these exactly:
+1. The CORRECT answer is: "${correctAnswer}"
+2. The 4 answer choices are FIXED — use them exactly as given, in this order: ${JSON.stringify(allOptions)}
+3. Do NOT invent new options. Do NOT change the spelling of any option.
+4. "correctAnswer" in your JSON MUST be exactly: "${correctAnswer}"
+5. "options" in your JSON MUST be exactly: ${JSON.stringify(allOptions)}
+
+Your job is ONLY to write:
+  - A clear, exam-style "question" stem (e.g. asking for synonym, antonym, or correct usage)
+  - A helpful "explanation" (2 sentences: why the correct answer is right, why the others are wrong)
+  - A short "hint" (word root, mnemonic, or subtle context clue)
+
+Return ONLY valid JSON — no markdown, no backticks:
 {
-  "question": "Clear exam-style question stem asking for synonym, antonym, or correct usage of ${word}",
-  "options": ["Option A", "Option B", "Option C", "Option D"],
-  "correctAnswer": "The exact string from options that is correct",
-  "explanation": "Brief 2-sentence explanation of why the correct answer is right and why distractors are wrong",
-  "hint": "Useful clue highlighting subtle context or word root"
-}
+  "question": "...",
+  "options": ${JSON.stringify(allOptions)},
+  "correctAnswer": "${correctAnswer}",
+  "explanation": "...",
+  "hint": "..."
+}`;
 
-Make sure 1 option is clearly correct and 3 are plausible distractors. Respond ONLY with raw JSON, no markdown formatting or backticks.`;
+  const ai = new GoogleGenAI({ apiKey });
 
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
     contents: prompt,
   });
 
-  const text = response.text || '';
-  const cleanJson = text.replace(/```json|```/g, '').trim();
+  const raw = response.text || '';
+  const cleanJson = raw.replace(/```json|```/g, '').trim();
 
   let parsed: AIQuizQuestionResponse;
   try {
     parsed = JSON.parse(cleanJson);
   } catch {
-    throw new Error(
-      'Gemini returned an unexpected response format. The AI model may be temporarily unavailable — please try again in a moment.'
-    );
+    throw new Error('Gemini returned an unexpected format. Please try again in a moment.');
   }
 
-  // Validate that the required fields are present to avoid downstream crashes
   if (
     typeof parsed.question !== 'string' ||
     !Array.isArray(parsed.options) ||
-    parsed.options.length < 2 ||
     typeof parsed.correctAnswer !== 'string'
   ) {
-    throw new Error(
-      'Gemini response was missing required fields (question, options, correctAnswer). Please try again.'
-    );
+    throw new Error('Gemini response was missing required fields. Please try again.');
   }
+
+  // Hard-enforce lexicon options regardless of what Gemini returned
+  parsed.options = allOptions;
+  parsed.correctAnswer = correctAnswer;
 
   return parsed;
 }

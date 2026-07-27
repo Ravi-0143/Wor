@@ -81,11 +81,27 @@ export const QuizChallengeView: React.FC<QuizChallengeViewProps> = ({ words }) =
     setAiError(null);
     setShowHint(false);
 
+    // Correct answer = this word's primary synonym (or its meaning as fallback)
+    const correctAnswer =
+      currentQuestion.targetWord.coreSynonyms[0] ||
+      currentQuestion.targetWord.meaning;
+
+    // Build 3 distractor options from OTHER words in the lexicon
+    const distractorPool = words
+      .filter(w => w.id !== currentQuestion.targetWord.id)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 10)
+      .map(w => w.coreSynonyms[0] || w.meaning)
+      .filter(v => v && v !== correctAnswer)
+      .slice(0, 3);
+
     try {
       const aiRes: AIQuizQuestionResponse = await fetchAIQuizQuestion(
         currentQuestion.targetWord.word,
         currentQuestion.targetWord.meaning,
-        currentQuestion.targetWord.category
+        currentQuestion.targetWord.category,
+        correctAnswer,
+        distractorPool
       );
 
       setQuestions(prev => {
