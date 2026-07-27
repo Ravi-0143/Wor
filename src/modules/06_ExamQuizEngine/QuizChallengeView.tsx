@@ -18,8 +18,6 @@ interface Question {
   isAiGenerated?: boolean;
 }
 
-const IS_STATIC_BUILD = import.meta.env.PROD;
-
 export const QuizChallengeView: React.FC<QuizChallengeViewProps> = ({ words }) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -157,20 +155,18 @@ export const QuizChallengeView: React.FC<QuizChallengeViewProps> = ({ words }) =
               )}
             </span>
 
-            {!IS_STATIC_BUILD && (
-              <button
-                onClick={handleGenerateAIQuestion}
-                disabled={aiLoading}
-                className="flex items-center gap-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 px-3.5 py-1.5 text-xs font-medium text-amber-300 border border-amber-500/30 transition-all disabled:opacity-50"
-                title="Generate a dynamic exam question powered by Gemini API"
-              >
-                <Sparkles className={`h-3.5 w-3.5 ${aiLoading ? 'animate-spin' : ''}`} />
-                <span>{aiLoading ? 'Generating AI Quiz...' : 'Generate Gemini AI Question'}</span>
-              </button>
-            )}
+            <button
+              onClick={handleGenerateAIQuestion}
+              disabled={aiLoading}
+              className="flex items-center gap-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 px-3.5 py-1.5 text-xs font-medium text-amber-300 border border-amber-500/30 transition-all disabled:opacity-50"
+              title="Generate a dynamic exam question powered by Gemini API"
+            >
+              <Sparkles className={`h-3.5 w-3.5 ${aiLoading ? 'animate-spin' : ''}`} />
+              <span>{aiLoading ? 'Generating AI Quiz...' : 'Generate Gemini AI Question'}</span>
+            </button>
           </div>
 
-          {!IS_STATIC_BUILD && aiError && (
+          {aiError && (
             <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs rounded-xl">
               {aiError}
             </div>
