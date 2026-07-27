@@ -134,8 +134,14 @@ Return ONLY valid JSON — no markdown, no backticks:
       if (response && response.text) break;
     } catch (err: any) {
       lastError = err;
-      const isNotFound = err?.status === 404 || err?.message?.includes('404') || err?.message?.includes('NOT_FOUND');
-      if (isNotFound) {
+      const isFallbackable =
+        err?.status === 404 ||
+        err?.message?.includes('404') ||
+        err?.message?.includes('NOT_FOUND') ||
+        err?.status === 429 ||
+        err?.message?.includes('429') ||
+        err?.message?.includes('RESOURCE_EXHAUSTED');
+      if (isFallbackable) {
         continue;
       }
       throw err;
