@@ -69,11 +69,21 @@ interface IntroLandingProps {
   words?: WordEntry[];
   onEnter?: (view?: string, selectedWord?: WordEntry) => void;
   introWord?: string;
+  onOpenGitHubModal?: () => void;
+  onReloadDefault?: () => void;
+  isLoadingGuide?: boolean;
 }
 
 type Stage = 'typing' | 'title-fade-out' | 'buttons-slide' | 'buttons-sink' | 'title-return' | 'exiting';
 
-export function IntroLanding({ words = [], onEnter, introWord = 'Lexicon' }: IntroLandingProps) {
+export function IntroLanding({ 
+  words = [], 
+  onEnter, 
+  introWord = 'Lexicon',
+  onOpenGitHubModal,
+  onReloadDefault,
+  isLoadingGuide = false
+}: IntroLandingProps) {
   const reducedMotion = useReducedMotion();
 
   // Pick 40 random words to display as stars so it changes every time the portal is opened
@@ -435,6 +445,40 @@ export function IntroLanding({ words = [], onEnter, introWord = 'Lexicon' }: Int
             </button>
           </React.Fragment>
         ))}
+      </div>
+
+      {/* Top Bar API & Data Controls on Portal */}
+      <div className="absolute top-4 right-4 z-30 flex items-center gap-2 pointer-events-auto">
+        <span className="rounded-full bg-slate-900/80 px-3 py-1 text-xs font-mono font-medium text-amber-300 border border-amber-500/20 backdrop-blur-md shadow-lg">
+          {words.length} Words
+        </span>
+
+        {onOpenGitHubModal && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenGitHubModal();
+            }}
+            className="flex items-center gap-1.5 rounded-full bg-slate-900/80 px-3 py-1 text-xs font-medium text-slate-300 border border-white/10 hover:bg-slate-800 hover:text-white transition-all backdrop-blur-md shadow-lg"
+            title="Import Markdown Guide or API Data"
+          >
+            <span>Import Guide</span>
+          </button>
+        )}
+
+        {onReloadDefault && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onReloadDefault();
+            }}
+            disabled={isLoadingGuide}
+            className="p-1.5 rounded-full bg-slate-900/80 text-slate-300 border border-white/10 hover:bg-slate-800 hover:text-white transition-all backdrop-blur-md shadow-lg disabled:opacity-50"
+            title="Reload Default Guide"
+          >
+            <span className={`inline-block ${isLoadingGuide ? 'animate-spin text-amber-400' : ''}`}>↻</span>
+          </button>
+        )}
       </div>
 
       {/* Main Title Center Stage */}

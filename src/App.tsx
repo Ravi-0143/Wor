@@ -220,13 +220,94 @@ export default function App() {
           setShowIntro(false);
         }}
         introWord="Lexicon"
+        onOpenGitHubModal={() => setIsGitHubModalOpen(true)}
+        onReloadDefault={loadDefaultGuide}
+        isLoadingGuide={isLoadingGuide}
       />
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-[#0F1115] text-[#F1F5F9] font-sans selection:bg-amber-500/30 selection:text-amber-200 overflow-x-hidden">
+    <div className="relative min-h-screen bg-[#0F1115] text-[#F1F5F9] font-sans selection:bg-amber-500/30 selection:text-amber-200 overflow-x-hidden pt-12">
       
+      {/* Floating Glassmorphic Navigation Dock */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1 rounded-full bg-[#161922]/90 p-1.5 border border-white/10 backdrop-blur-xl shadow-2xl">
+        <button
+          onClick={() => setShowIntro(true)}
+          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-all cursor-pointer"
+          title="Return to Portal"
+        >
+          <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+          <span className="hidden sm:inline">Portal</span>
+        </button>
+
+        <div className="h-4 w-px bg-white/10 my-auto mx-0.5" />
+
+        <button
+          onClick={() => setSubView('cards')}
+          className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+            subView === 'cards' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Directory
+        </button>
+
+        <button
+          onClick={() => setSubView('graph')}
+          className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+            subView === 'graph' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Mesh Graph
+        </button>
+
+        <button
+          onClick={() => setSubView('reverse')}
+          className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+            subView === 'reverse' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Reverse
+        </button>
+
+        <button
+          onClick={() => setSubView('mastery')}
+          className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+            subView === 'mastery' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Mastery
+        </button>
+
+        <button
+          onClick={() => setSubView('quiz')}
+          className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+            subView === 'quiz' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30 shadow-sm' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Quiz
+        </button>
+
+        <div className="h-4 w-px bg-white/10 my-auto mx-0.5" />
+
+        <button
+          onClick={() => setIsGitHubModalOpen(true)}
+          className="p-1.5 rounded-full text-slate-400 hover:text-slate-200 hover:bg-white/10 transition-all"
+          title="Import Markdown Guide / API Data"
+        >
+          <Github className="h-3.5 w-3.5" />
+        </button>
+
+        <button
+          onClick={loadDefaultGuide}
+          disabled={isLoadingGuide}
+          className="p-1.5 rounded-full text-slate-400 hover:text-slate-200 hover:bg-white/10 transition-all disabled:opacity-50"
+          title="Reload Guide Data"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${isLoadingGuide ? 'animate-spin text-amber-400' : ''}`} />
+        </button>
+      </div>
+
       {/* Module 01: Static Monastery Dark Background */}
       <FloatingAntigravityCanvas
         words={guideData?.words || []}
