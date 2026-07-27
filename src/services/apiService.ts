@@ -19,8 +19,13 @@ export async function fetchDefaultRevisionGuide(): Promise<RevisionGuideData> {
       const res = await fetch(url);
       if (res.ok) {
         const text = await res.text();
-        if (text && text.trim().length > 0) {
-          return parseRevisionGuideMarkdown(text, url);
+        const trimmed = text.trim().toLowerCase();
+        // Ignore HTML fallback pages (e.g. index.html returned by SPA routing on 404)
+        if (text && !trimmed.startsWith('<!doctype') && !trimmed.startsWith('<html')) {
+          const parsed = parseRevisionGuideMarkdown(text, url);
+          if (parsed.words.length > 0) {
+            return parsed;
+          }
         }
       }
     } catch {
