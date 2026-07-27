@@ -7,7 +7,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 
 // Module 01: Lexicon Main Stage
 import { FloatingAntigravityCanvas } from './modules/01_LexiconMainStage/FloatingAntigravityCanvas';
-import { Navbar } from './modules/01_LexiconMainStage/Navbar';
 import { LexiconListView } from './modules/01_LexiconMainStage/LexiconListView';
 
 // Module 02: Markdown Parser Service
@@ -37,13 +36,16 @@ import {
   AlertTriangle, 
   Star, 
   Target,
-  Sparkles
+  Sparkles,
+  Search,
+  X,
+  Github,
+  RefreshCw
 } from 'lucide-react';
 
 export default function App() {
   const [showIntro, setShowIntro] = useState<boolean>(true);
   const [subView, setSubView] = useState<'cards' | 'graph' | 'reverse' | 'quiz' | 'mastery' | 'inspect'>('cards');
-  const [showFilters, setShowFilters] = useState<boolean>(false);
 
   const [guideData, setGuideData] = useState<RevisionGuideData | null>(null);
   const [isLoadingGuide, setIsLoadingGuide] = useState(true);
@@ -235,20 +237,6 @@ export default function App() {
         selectedWordId={activeHeroWord?.id}
       />
 
-      {/* Module 01: Monastery Dark Navbar */}
-      <Navbar
-        subView={subView}
-        setSubView={setSubView}
-        guideData={guideData}
-        onOpenGitHubModal={() => setIsGitHubModalOpen(true)}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        isLoading={isLoadingGuide}
-        onReloadDefault={loadDefaultGuide}
-        showFilters={showFilters}
-        setShowFilters={setShowFilters}
-      />
-
       {/* MAIN VIEWPORT CONTAINER WITH DYNAMIC SCROLL ZOOM-OUT SCALE */}
       <div 
         style={{ 
@@ -278,7 +266,7 @@ export default function App() {
 
               {/* Module 01: Continuous Lexicon Directory Table ("No Cards!") */}
               <div className="space-y-6 pt-6 border-t border-white/10">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2">
                       <Target className="h-4 w-4 text-amber-400" />
@@ -290,58 +278,96 @@ export default function App() {
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 font-sans mt-0.5">
-                      Select any term row to focus its details on the stage above.
+                      Select any term row to inspect full details.
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                  {/* Search Bar & Actions */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative min-w-[220px] sm:min-w-[280px]">
+                      <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
+                      <input
+                        id="antigravity-search-input"
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search term, meaning, trap, or synonym..."
+                        className="w-full rounded-xl bg-[#161922] border border-white/10 pl-9 pr-8 py-1.5 text-xs text-[#F1F5F9] placeholder-slate-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+                      />
+                      {searchQuery && (
+                        <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-2 text-slate-500 hover:text-slate-300">
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+
                     <button
-                      onClick={() => setSelectedCategory('All')}
-                      className={`rounded-lg px-3 py-1 transition-all font-medium border ${
-                        selectedCategory === 'All'
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
-                          : 'bg-[#161922] text-slate-400 border-white/10 hover:text-slate-200'
-                      }`}
+                      onClick={() => setIsGitHubModalOpen(true)}
+                      className="flex items-center gap-1.5 rounded-xl bg-[#161922] px-3 py-1.5 text-xs font-medium text-slate-300 border border-white/10 hover:bg-slate-800 transition-all"
+                      title="Import Markdown Guide"
                     >
-                      All ({guideData?.words.length || 0})
+                      <Github className="h-3.5 w-3.5 text-slate-300" />
+                      <span>Import</span>
                     </button>
 
                     <button
-                      onClick={() => setMinStarsFilter(prev => prev === 5 ? 0 : 5)}
-                      className={`rounded-lg px-3 py-1 flex items-center gap-1 transition-all border ${
-                        minStarsFilter === 5
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-medium'
-                          : 'bg-[#161922] text-slate-400 border-white/10 hover:text-slate-200'
-                      }`}
+                      onClick={loadDefaultGuide}
+                      disabled={isLoadingGuide}
+                      className="p-1.5 rounded-xl bg-[#161922] text-slate-300 border border-white/10 hover:bg-slate-800 transition-all disabled:opacity-50"
+                      title="Reload Default Guide"
                     >
-                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                      <span>5-Star PYQ</span>
-                    </button>
-
-                    <button
-                      onClick={() => setTrapsOnly(!trapsOnly)}
-                      className={`rounded-lg px-3 py-1 flex items-center gap-1 transition-all border ${
-                        trapsOnly
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-medium'
-                          : 'bg-[#161922] text-slate-400 border-white/10 hover:text-slate-200'
-                      }`}
-                    >
-                      <AlertTriangle className="h-3 w-3 text-amber-400" />
-                      <span>Traps Only</span>
-                    </button>
-
-                    <button
-                      onClick={() => setPyqOnly(!pyqOnly)}
-                      className={`rounded-lg px-3 py-1 flex items-center gap-1 transition-all border ${
-                        pyqOnly
-                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-medium'
-                          : 'bg-[#161922] text-slate-400 border-white/10 hover:text-slate-200'
-                      }`}
-                    >
-                      <Award className="h-3 w-3 text-emerald-400" />
-                      <span>SSC PYQ</span>
+                      <RefreshCw className={`h-3.5 w-3.5 ${isLoadingGuide ? 'animate-spin text-amber-400' : ''}`} />
                     </button>
                   </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 text-xs pt-2 border-t border-white/5">
+                  <button
+                    onClick={() => setSelectedCategory('All')}
+                    className={`rounded-lg px-3 py-1 transition-all font-medium border ${
+                      selectedCategory === 'All'
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                        : 'bg-[#161922] text-slate-400 border-white/10 hover:text-slate-200'
+                    }`}
+                  >
+                    All ({guideData?.words.length || 0})
+                  </button>
+
+                  <button
+                    onClick={() => setMinStarsFilter(prev => prev === 5 ? 0 : 5)}
+                    className={`rounded-lg px-3 py-1 flex items-center gap-1 transition-all border ${
+                      minStarsFilter === 5
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-medium'
+                        : 'bg-[#161922] text-slate-400 border-white/10 hover:text-slate-200'
+                    }`}
+                  >
+                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                    <span>5-Star PYQ</span>
+                  </button>
+
+                  <button
+                    onClick={() => setTrapsOnly(!trapsOnly)}
+                    className={`rounded-lg px-3 py-1 flex items-center gap-1 transition-all border ${
+                      trapsOnly
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-medium'
+                        : 'bg-[#161922] text-slate-400 border-white/10 hover:text-slate-200'
+                    }`}
+                  >
+                    <AlertTriangle className="h-3 w-3 text-amber-400" />
+                    <span>Traps Only</span>
+                  </button>
+
+                  <button
+                    onClick={() => setPyqOnly(!pyqOnly)}
+                    className={`rounded-lg px-3 py-1 flex items-center gap-1 transition-all border ${
+                      pyqOnly
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-medium'
+                        : 'bg-[#161922] text-slate-400 border-white/10 hover:text-slate-200'
+                    }`}
+                  >
+                    <Award className="h-3 w-3 text-emerald-400" />
+                    <span>SSC PYQ</span>
+                  </button>
                 </div>
 
                 {isLoadingGuide ? (
