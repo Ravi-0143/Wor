@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { WordEntry } from '../../types';
-import { fetchAIQuizQuestion, AIQuizQuestionResponse } from '../02_MarkdownParserService/apiService';
+import { fetchAIQuizQuestion, AIQuizQuestionResponse } from '../../services/apiService';
 import { Brain, CheckCircle2, XCircle, Award, Sparkles, ArrowRight, Lightbulb } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface QuizChallengeViewProps {
   words: WordEntry[];
+  onReloadDefault?: () => void;
 }
 
 interface Question {
@@ -18,7 +19,7 @@ interface Question {
   isAiGenerated?: boolean;
 }
 
-export const QuizChallengeView: React.FC<QuizChallengeViewProps> = ({ words }) => {
+export const QuizChallengeView: React.FC<QuizChallengeViewProps> = ({ words, onReloadDefault }) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -38,9 +39,13 @@ export const QuizChallengeView: React.FC<QuizChallengeViewProps> = ({ words }) =
     const generated: Question[] = words.slice(0, 10).map(wordObj => {
       const correctAnswer = wordObj.coreSynonyms[0] || wordObj.meaning;
       const otherWords = words.filter(w => w.id !== wordObj.id);
-      const wrongOptions = otherWords
-        .map(w => w.coreSynonyms[0] || w.meaning)
-        .slice(0, 3);
+      const wrongOptionsSet = new Set<string>();
+      for (const w of otherWords) {
+        const opt = w.coreSynonyms[0] || w.meaning;
+        if (opt && opt !== correctAnswer) wrongOptionsSet.add(opt);
+        if (wrongOptionsSet.size >= 3) break;
+      }
+      const wrongOptions = Array.from(wrongOptionsSet);
 
       const allOptions = [correctAnswer, ...wrongOptions].sort(() => Math.random() - 0.5);
 
@@ -138,8 +143,16 @@ export const QuizChallengeView: React.FC<QuizChallengeViewProps> = ({ words }) =
 
   if (!words || words.length < 4) {
     return (
-      <div className="py-20 text-center text-slate-400 font-mono">
-        Need at least 4 words in your dataset to build a quiz challenge.
+      <div className="py-20 text-center text-slate-400 font-mono flex flex-col items-center gap-4">
+        <p>Need at least 4 words in your dataset to build a quiz challenge.</p>
+        {onReloadDefault && (
+          <button 
+            onClick={onReloadDefault}
+            className="rounded-xl bg-amber-500/20 px-4 py-2 text-xs font-medium text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 transition-all"
+          >
+            Load Default Lexicon Guide
+          </button>
+        )}
       </div>
     );
   }

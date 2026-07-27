@@ -17,14 +17,14 @@ const GLOBAL_STYLES = `
 
   .wi-root {
     --wi-bg:       #FAFAF8;
-    --wi-ink:      #1a1a18;
-    --wi-ink-2:    #3d3d38;
-    --wi-ink-3:    #7a7a72;
-    --wi-ink-4:    #b0b0a8;
-    --wi-green:    #2e6b4a;
-    --wi-red:      #852929;
-    --wi-blue:     #1a4b8a;
-    --wi-accent:   #c9a84c;
+    --wi-ink:      #111111;
+    --wi-ink-2:    #333333;
+    --wi-ink-3:    #555555;
+    --wi-ink-4:    #767676;
+    --wi-green:    #225c3b;
+    --wi-red:      #8c1c1c;
+    --wi-blue:     #144280;
+    --wi-accent:   #967216;
     min-height: 100vh;
     background: var(--wi-bg);
     font-family: 'Inter', system-ui, sans-serif;

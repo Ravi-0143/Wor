@@ -33,7 +33,7 @@ export const LexiconListView: React.FC<LexiconListViewProps> = ({
           <span className="text-slate-500">({safeWords.length} terms)</span>
         </div>
         <span className="text-[11px] text-amber-400/80 hidden sm:inline">
-          Instant Frequent Synonyms At a Glance • Click term to Delve Deeper (Module 08)
+          Instant Frequent Synonyms At a Glance • Click term to Inspect Word
         </span>
       </div>
 
@@ -49,7 +49,7 @@ export const LexiconListView: React.FC<LexiconListViewProps> = ({
                 <th className="py-3.5 px-4 min-w-[260px]">Instant Frequent Synonyms</th>
                 <th className="py-3.5 px-4 hidden lg:table-cell min-w-[140px]">Antonyms</th>
                 <th className="py-3.5 px-4 text-center">PYQ Rating</th>
-                <th className="py-3.5 px-4 text-right min-w-[130px]">Module 08 Deep Dive</th>
+                <th className="py-3.5 px-4 text-right min-w-[130px]">Inspect Word</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-xs text-[#E2E8F0] font-sans">
@@ -62,8 +62,16 @@ export const LexiconListView: React.FC<LexiconListViewProps> = ({
                   <tr 
                     key={word.id}
                     onClick={() => onOpenAIExplanation(word)}
-                    className="group hover:bg-[#1C202C]/90 transition-colors cursor-pointer"
-                    title={`Click to delve deeper into ${word.word} in Module 08`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onOpenAIExplanation(word);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    className="group hover:bg-[#1C202C]/90 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
+                    title={`Click to inspect details for ${word.word}`}
                   >
                     {/* Mastery Checkbox */}
                     <td className="py-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
@@ -170,7 +178,7 @@ export const LexiconListView: React.FC<LexiconListViewProps> = ({
                         onClick={() => onOpenAIExplanation(word)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-medium border border-amber-500/30 transition-all shadow-sm group-hover:border-amber-400"
                       >
-                        <span>Delve Deeper</span>
+                        <span>Inspect</span>
                         <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                       </button>
                     </td>

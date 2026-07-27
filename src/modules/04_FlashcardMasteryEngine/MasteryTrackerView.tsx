@@ -44,10 +44,16 @@ export const MasteryTrackerView: React.FC<MasteryTrackerViewProps> = ({
       }
     }
     setIsFlipped(false);
-    if (currentIndex < unmasteredWords.length - 1) {
-      setCurrentIndex(prev => prev + 1);
+    if (markMastered) {
+      if (currentIndex >= unmasteredWords.length - 1) {
+        setCurrentIndex(0);
+      }
     } else {
-      setCurrentIndex(0);
+      if (currentIndex < unmasteredWords.length - 1) {
+        setCurrentIndex(prev => prev + 1);
+      } else {
+        setCurrentIndex(0);
+      }
     }
   };
 
@@ -143,7 +149,15 @@ export const MasteryTrackerView: React.FC<MasteryTrackerViewProps> = ({
               {/* Flip Card Container */}
               <div 
                 onClick={() => setIsFlipped(!isFlipped)}
-                className="group relative min-h-[320px] w-full cursor-pointer rounded-3xl border border-slate-200/80 bg-white p-8 shadow-2xl transition-all duration-500 hover:shadow-indigo-100 flex flex-col justify-between"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setIsFlipped(!isFlipped);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                className="group relative min-h-[320px] w-full cursor-pointer rounded-3xl border border-slate-200/80 bg-white p-8 shadow-2xl transition-all duration-500 hover:shadow-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 flex flex-col justify-between"
               >
                 {!isFlipped ? (
                   /* FRONT OF CARD */

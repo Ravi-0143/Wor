@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 
 // Module 01: Lexicon Main Stage
 import { FloatingAntigravityCanvas } from './modules/01_LexiconMainStage/FloatingAntigravityCanvas';
@@ -11,7 +11,7 @@ import { Navbar } from './modules/01_LexiconMainStage/Navbar';
 import { LexiconListView } from './modules/01_LexiconMainStage/LexiconListView';
 
 // Module 02: Markdown Parser Service
-import { fetchDefaultRevisionGuide } from './modules/02_MarkdownParserService/apiService';
+import { fetchDefaultRevisionGuide } from './services/apiService';
 
 // Module 03: Main Character Word Stage (Bypassed in favor of Module 08)
 import { WordDetailInspectorView } from './modules/08_WordDetailInspector/WordDetailInspectorView';
@@ -61,8 +61,14 @@ export default function App() {
 
   const [scrollScale, setScrollScale] = useState<number>(1.0);
 
+  const scaleRef = useRef<number>(1.0);
+
   // Dynamic Scroll Zoom-Out Effect based on Scroll Velocity
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia("(pointer: coarse)").matches) {
+      return; // Disable on touch devices
+    }
+
     let lastScrollY = window.scrollY;
     let lastTime = performance.now();
     let animId: number;
@@ -79,15 +85,20 @@ export default function App() {
 
       // Scale range: 1.0 (stationary) to ~0.94 (fast scroll)
       const targetScale = Math.max(0.94, 1.0 - Math.min(velocity, 2.0) * 0.03);
-      setScrollScale(prev => prev + (targetScale - prev) * 0.2);
+      scaleRef.current = scaleRef.current + (targetScale - scaleRef.current) * 0.2;
+      setScrollScale(scaleRef.current);
     };
 
     const returnToNormal = () => {
-      setScrollScale(prev => {
-        const diff = 1.0 - prev;
-        if (Math.abs(diff) < 0.0005) return 1.0;
-        return prev + diff * 0.12;
-      });
+      const diff = 1.0 - scaleRef.current;
+      if (Math.abs(diff) < 0.0005) {
+        scaleRef.current = 1.0;
+        setScrollScale(1.0);
+        return; // Break the infinite loop!
+      }
+      
+      scaleRef.current = scaleRef.current + diff * 0.12;
+      setScrollScale(scaleRef.current);
       animId = requestAnimationFrame(returnToNormal);
     };
 
@@ -117,7 +128,9 @@ export default function App() {
   const [masteredIds, setMasteredIds] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('atlas-mastered-words');
-      return saved ? JSON.parse(saved) : [];
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
@@ -404,6 +417,7 @@ export default function App() {
           {subView === 'quiz' && (
             <QuizChallengeView
               words={guideData?.words || []}
+              onReloadDefault={loadDefaultGuide}
             />
           )}
 
@@ -417,13 +431,22 @@ export default function App() {
           )}
 
           {/* Module 08: Word Detail Inspector View */}
-          {subView === 'inspect' && selectedWord && (
-            <WordDetailInspectorView
-              word={selectedWord}
-              allWords={guideData?.words || []}
-              onSelectRelatedWord={(w) => setSelectedWord(w)}
-              onBack={() => setSubView('cards')}
-            />
+          {subView === 'inspect' && (
+            selectedWord ? (
+              <WordDetailInspectorView
+                word={selectedWord}
+                allWords={guideData?.words || []}
+                onSelectRelatedWord={(w) => setSelectedWord(w)}
+                onBack={() => setSubView('cards')}
+              />
+            ) : (
+              <div className="py-16 text-center text-slate-400 border border-white/10 rounded-2xl bg-[#161922]">
+                <p className="text-sm font-sans">No word selected for inspection.</p>
+                <button onClick={() => setSubView('cards')} className="mt-4 px-4 py-2 bg-amber-500/20 text-amber-300 rounded-xl text-xs font-semibold hover:bg-amber-500/30 transition-colors">
+                  Return to Word Stage
+                </button>
+              </div>
+            )
           )}
 
         {/* Persistent Return to Portal Button at the bottom of every module */}
@@ -448,7 +471,8 @@ export default function App() {
         onClose={() => setIsGitHubModalOpen(false)}
         onGuideLoaded={(newGuide) => {
           setGuideData(newGuide);
-          if (newGuide.words.length > 0) setMainCharacterWord(newGuide.words[0]);
+          setMainCharacterWord(newGuide.words[0] || null);
+          setSelectedWord(null);
         }}
       />
 

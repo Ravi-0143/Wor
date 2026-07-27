@@ -29,7 +29,17 @@ const DEMO_WORDS = [
   'juxtapose', 'kaleidoscope', 'languid', 'mellifluous', 'nefarious', 'opulent',
   'paradigm', 'querulous', 'ruminate', 'solace', 'trepidation', 'unassailable',
   'vicarious', 'winsome',
-].map((word, i) => ({ id: `demo-${i}`, word }));
+].map((word, i) => ({ 
+  id: `demo-${i}`, 
+  word,
+  stars: 3,
+  meaning: `A placeholder meaning for the demo word ${word}. Load a real guide to see full details.`,
+  coreSynonyms: [],
+  advancedSynonyms: [],
+  antonyms: [],
+  examAnswers: [],
+  category: 'Demo',
+}));
 
 function useReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -364,11 +374,7 @@ export function IntroLanding({ words = [], onEnter, introWord = 'Lexicon' }: Int
   return (
     <div
       ref={containerRef}
-      role="button"
-      tabIndex={0}
-      aria-label={`Enter ${introWord}`}
       onClick={handleActivate}
-      onKeyDown={handleKeyDown}
       className="fixed inset-0 overflow-hidden select-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-0"
       style={{
         background: 'radial-gradient(ellipse at 50% 45%, #10101c 0%, #07070d 55%, #030305 100%)',

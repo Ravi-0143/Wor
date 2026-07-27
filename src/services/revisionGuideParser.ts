@@ -9,14 +9,24 @@ export function parseRevisionGuideMarkdown(markdown: string, sourceUrl?: string)
   const tips: string[] = [];
   const words: WordEntry[] = [];
   const categoriesSet = new Set<string>();
+  const usedIds = new Set<string>();
 
   let currentCategory = 'General';
   let currentWord: Partial<WordEntry> | null = null;
 
   const commitCurrentWord = () => {
     if (currentWord && currentWord.word) {
+      let slug = `word-${currentWord.word.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+      let uniqueId = slug;
+      let counter = 1;
+      while (usedIds.has(uniqueId)) {
+        counter++;
+        uniqueId = `${slug}-${counter}`;
+      }
+      usedIds.add(uniqueId);
+
       const entry: WordEntry = {
-        id: `word-${currentWord.word.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+        id: uniqueId,
         word: currentWord.word,
         stars: currentWord.stars || 3,
         meaning: currentWord.meaning || 'No meaning provided',
@@ -82,10 +92,10 @@ export function parseRevisionGuideMarkdown(markdown: string, sourceUrl?: string)
       const rawHeader = line.replace('### ', '').trim();
 
       // Check cross reference: Abdurate → See Obdurate
-      if (rawHeader.includes('→') || rawHeader.includes('See ')) {
-        const parts = rawHeader.split(/→|->|See /i);
-        const word = parts[0].trim();
-        const ref = parts.slice(1).join(' ').trim();
+      const crossRefMatch = rawHeader.match(/^(.*?)\s*(?:→|->|See\s+)(.*)$/i);
+      if (crossRefMatch) {
+        const word = crossRefMatch[1].replace(/★+/g, '').replace(/[\(\)]/g, '').trim();
+        const ref = crossRefMatch[2].replace(/★+/g, '').replace(/[\(\)]/g, '').trim();
         currentWord = {
           word,
           stars: 3,
@@ -127,7 +137,7 @@ export function parseRevisionGuideMarkdown(markdown: string, sourceUrl?: string)
       if (line.startsWith('**Meaning**')) {
         let meaningText = line.replace('**Meaning**', '').replace(/^[\s>:=]+/, '').trim();
         // Check for Hindi meaning in parentheses like (शुरू) or (नवीनता)
-        const hindiMatch = meaningText.match(/\(([\u0900-\u097F\s]+)\)/);
+        const hindiMatch = meaningText.match(/\(([\u0900-\u097F\s\/,\-\d]+)\)/);
         if (hindiMatch) {
           currentWord.hindiMeaning = hindiMatch[1].trim();
           meaningText = meaningText.replace(hindiMatch[0], '').trim();
@@ -137,24 +147,24 @@ export function parseRevisionGuideMarkdown(markdown: string, sourceUrl?: string)
       }
 
       // Core Synonyms: 🟢 **Core** · Obscure · Unclear · Vague · Arcane
-      if (line.includes('🟢') || line.toLowerCase().includes('core')) {
-        const text = line.replace(/🟢|\*\*Core\*\*|Core/gi, '').replace(/^[\s·:]+/, '').trim();
+      if (line.startsWith('🟢') || /^(\*\*Core\*\*|Core:)/i.test(line)) {
+        const text = line.replace(/🟢|\*\*Core\*\*|^Core:/gi, '').replace(/^[\s·:]+/, '').trim();
         const syns = text.split(/·|,|;/).map(s => s.trim()).filter(Boolean);
         currentWord.coreSynonyms = syns;
         continue;
       }
 
       // Advanced Synonyms: 🔵 **Advanced** · Esoteric · Recondite · Cryptic
-      if (line.includes('🔵') || line.toLowerCase().includes('advanced')) {
-        const text = line.replace(/🔵|\*\*Advanced\*\*|Advanced/gi, '').replace(/^[\s·:]+/, '').trim();
+      if (line.startsWith('🔵') || /^(\*\*Advanced\*\*|Advanced:)/i.test(line)) {
+        const text = line.replace(/🔵|\*\*Advanced\*\*|^Advanced:/gi, '').replace(/^[\s·:]+/, '').trim();
         const syns = text.split(/·|,|;/).map(s => s.trim()).filter(Boolean);
         currentWord.advancedSynonyms = syns;
         continue;
       }
 
       // Antonyms: 🟠 **Antonyms** · Clear · Obvious · Lucid
-      if (line.includes('🟠') || line.toLowerCase().includes('antonyms')) {
-        const text = line.replace(/🟠|\*\*Antonyms\*\*|Antonyms/gi, '').replace(/^[\s·:]+/, '').trim();
+      if (line.startsWith('🟠') || /^(\*\*Antonyms?\*\*|Antonyms?:)/i.test(line)) {
+        const text = line.replace(/🟠|\*\*Antonyms?\*\*|^Antonyms?:/gi, '').replace(/^[\s·:]+/, '').trim();
         const ants = text.split(/·|,|;/).map(s => s.trim()).filter(Boolean);
         currentWord.antonyms = ants;
         continue;
@@ -168,8 +178,8 @@ export function parseRevisionGuideMarkdown(markdown: string, sourceUrl?: string)
       }
 
       // Exam Answers: ⭐ **Exam Answers** → *Gullible* (Q1) · *Innocent* (Q12)
-      if (line.includes('⭐') || line.toLowerCase().includes('exam answer')) {
-        const text = line.replace(/⭐|\*\*Exam Answers?\*\*|Exam Answers?/gi, '').replace(/^[\s·:→>]+/, '').trim();
+      if (line.startsWith('⭐') || /^(\*\*Exam Answers?\*\*|Exam Answers?:)/i.test(line)) {
+        const text = line.replace(/⭐|\*\*Exam Answers?\*\*|^Exam Answers?:/gi, '').replace(/^[\s·:→>]+/, '').trim();
         // Remove markdown asterisks and parse individual answers
         const cleanText = text.replace(/\*/g, '');
         const answers = cleanText.split(/·|,/).map(a => a.trim()).filter(Boolean);

@@ -71,34 +71,42 @@ export const ReverseIndexView: React.FC<ReverseIndexViewProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredConcepts.map(([concept, wordList]) => (
-          <div key={concept} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <span className="text-sm font-extrabold text-indigo-900 font-mono capitalize">{concept}</span>
-              <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
-                {wordList.length} Words
-              </span>
+      {filteredConcepts.length === 0 ? (
+        <div className="py-20 text-center text-slate-500 font-sans border border-slate-200/60 rounded-3xl bg-slate-50/50">
+          <Search className="h-10 w-10 mx-auto text-slate-300 mb-4" />
+          <p className="text-sm font-semibold text-slate-700">No concepts found matching "{searchQuery}"</p>
+          <p className="text-xs mt-1">Try searching for a different synonym or phrase.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredConcepts.map(([concept, wordList]) => (
+            <div key={concept} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <span className="text-sm font-extrabold text-indigo-900 font-mono capitalize">{concept}</span>
+                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+                  {wordList.length} Words
+                </span>
+              </div>
+  
+              <div className="space-y-2">
+                {wordList.map(w => (
+                  <button
+                    key={w.id}
+                    onClick={() => onOpenAIExplanation(w)}
+                    className="w-full text-left p-2 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 transition-all flex items-center justify-between group"
+                  >
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 group-hover:text-indigo-700 font-serif">{w.word}</span>
+                      <p className="text-[10px] text-slate-500 line-clamp-1">{w.meaning}</p>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-600 shrink-0 ml-2" />
+                  </button>
+                ))}
+              </div>
             </div>
-
-            <div className="space-y-2">
-              {wordList.map(w => (
-                <button
-                  key={w.id}
-                  onClick={() => onOpenAIExplanation(w)}
-                  className="w-full text-left p-2 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 transition-all flex items-center justify-between group"
-                >
-                  <div>
-                    <span className="text-xs font-bold text-slate-900 group-hover:text-indigo-700 font-serif">{w.word}</span>
-                    <p className="text-[10px] text-slate-500 line-clamp-1">{w.meaning}</p>
-                  </div>
-                  <ArrowRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-600 shrink-0 ml-2" />
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

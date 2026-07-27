@@ -125,10 +125,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             {showMoreMenu && (
-              <div 
-                className="absolute right-0 mt-2 w-48 rounded-xl border border-white/10 bg-[#161922] p-1.5 shadow-2xl backdrop-blur-2xl z-50"
-                onMouseLeave={() => setShowMoreMenu(false)}
-              >
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setShowMoreMenu(false)} 
+                />
+                <div 
+                  className="absolute right-0 mt-2 w-48 rounded-xl border border-white/10 bg-[#161922] p-1.5 shadow-2xl backdrop-blur-2xl z-50"
+                  onMouseLeave={() => setShowMoreMenu(false)}
+                >
                 <button
                   onClick={() => {
                     setSubView('graph');
@@ -151,6 +156,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span>Reverse Index</span>
                 </button>
               </div>
+              </>
             )}
           </div>
         </nav>
@@ -163,7 +169,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               id="antigravity-search-input"
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (subView !== 'cards' && e.target.value.trim() !== '') setSubView('cards');
+              }}
               placeholder="Search term, meaning, trap, or synonym... ( / )"
               className="w-full rounded-xl bg-[#161922] border border-white/10 pl-9 pr-8 py-2 text-xs text-[#F1F5F9] placeholder-slate-500 focus:border-amber-500/50 focus:bg-[#1C202C] focus:outline-none focus:ring-1 focus:ring-amber-500/30 transition-all shadow-inner"
             />

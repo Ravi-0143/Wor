@@ -71,11 +71,3 @@ export interface QuizResult {
   }[];
 }
 
-export interface UserMasteryState {
-  wordId: string;
-  masteryLevel: number; // 0 = New, 1 = Learning, 2 = Mastered
-  lastReviewed: string;
-  timesCorrect: number;
-  timesIncorrect: number;
-  notes?: string;
-}

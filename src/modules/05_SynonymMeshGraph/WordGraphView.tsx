@@ -415,7 +415,7 @@ export const WordGraphView: React.FC<WordGraphViewProps> = ({ words, onSelectWor
       {/* Physics Canvas Engine */}
       <div 
         ref={containerRef}
-        className="relative flex-1 rounded-2xl border border-slate-200 bg-slate-50 shadow-inner overflow-hidden cursor-grab active:cursor-grabbing"
+        className="relative flex-1 min-h-[400px] rounded-2xl border border-slate-200 bg-slate-50 shadow-inner overflow-hidden cursor-grab active:cursor-grabbing"
       >
         <div className="absolute top-4 left-4 z-10 flex items-center gap-2 text-xs text-slate-400 font-medium pointer-events-none">
           <MousePointer2 className="h-3 w-3" /> Scroll to zoom, drag to pan
@@ -429,7 +429,9 @@ export const WordGraphView: React.FC<WordGraphViewProps> = ({ words, onSelectWor
           onPointerCancel={handlePointerUp}
           onPointerLeave={handlePointerUp}
           onWheel={handleWheel}
-          className="block w-full h-full touch-none"
+          className="block w-full h-full"
+          aria-label="Interactive synonym network graph"
+          role="img"
         />
       </div>
     </div>

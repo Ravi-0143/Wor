@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Github, Upload, Link, AlertCircle, CheckCircle2, FileText, X } from 'lucide-react';
 import { fetchGitHubRevisionGuide } from '../services/apiService';
 import { parseRevisionGuideMarkdown } from '../services/revisionGuideParser';
@@ -21,6 +21,16 @@ export const GitHubGuideModal: React.FC<GitHubGuideModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [activeMode, setActiveMode] = useState<'github' | 'paste' | 'upload'>('github');
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleEsc);
+    }
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
