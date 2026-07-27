@@ -12,6 +12,7 @@ build/
 
 # Misc
 .DS_Store
+Thumbs.db
 *.pem
 
 # Debug Logs
@@ -22,13 +23,12 @@ pnpm-debug.log*
 lerna-debug.log*
 *.log
 
-# Local Environment & Secrets
+# Local Environment & Secrets (never commit real keys)
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-!.env.example
 
 # IDE & Editor files
 .idea/
@@ -41,3 +41,7 @@ lerna-debug.log*
 
 # Vite Cache
 .vite/
+
+# Bun (this project uses npm — bun.lock is not needed)
+bun.lock
+bun.lockb
